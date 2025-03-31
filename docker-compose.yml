@@ -15,6 +15,11 @@ services:
       - pgdata:/var/lib/postgresql/data
     ports:
       - "${DB_PORT}:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${DB_USER}", "-d", "${DB_NAME}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   redis:
     image: redis:latest
@@ -28,8 +33,10 @@ services:
     container_name: url_shortener_app
     restart: always
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
     env_file:
       - .env
     environment:
@@ -43,4 +50,3 @@ services:
 
 volumes:
   pgdata:
-
